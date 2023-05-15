@@ -11,7 +11,7 @@ const passwordSelector: string = "#user_password";
 const loginBtn: string = "#new-signin-button";
 const absenBtn: string =
   "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.tl-card.hide-box-shadow-on-mobile.hide-border-on-mobile.text-center.p-0 > div.d-block.p-4.px-0-on-mobile > div > div:nth-child(1) > button";
-
+const clockInSuccessSelector: string = "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.mt-5 > ul > li > div > p"
 //credentials
 
 const run = async () => {
@@ -51,7 +51,11 @@ const run = async () => {
     await page.goto(liveAttendanceURL);
     console.log("absen page");
     await page.waitForSelector(absenBtn);
-
+    await page.click(absenBtn);
+    const clockInRes : puppeteer.ElementHandle<Element> | null = await page.waitForSelector(clockInSuccessSelector);
+    if(!clockInRes) throw new Error('clock in gagal');
+    console.log(document.querySelector(clockInSuccessSelector)?.textContent)
+    
     //testing
     const test: Buffer = await page.screenshot({ type: "png" });
     fs.writeFileSync("test.png", test);
