@@ -9,12 +9,16 @@ const singOutURL: string = "https://hr.talenta.co/site/sign-out";
 const emailSelector: string = "#user_email";
 const passwordSelector: string = "#user_password";
 const loginBtn: string = "#new-signin-button";
-const absenBtn: string =
+const clockInBtn: string =
   "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.tl-card.hide-box-shadow-on-mobile.hide-border-on-mobile.text-center.p-0 > div.d-block.p-4.px-0-on-mobile > div > div:nth-child(1) > button";
-const clockInSuccessSelector: string = "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.mt-5 > ul > li > div > p"
-//credentials
+const clockOutBtn: string =
+  "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.tl-card.hide-box-shadow-on-mobile.hide-border-on-mobile.text-center.p-0 > div.d-block.p-4.px-0-on-mobile > div > div:nth-child(2) > button";
+const clockInSuccessSelector: string =
+  "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.mt-5 > ul > li.py-2.border-smoke.border-bottom > div > p";
+const clockOutSuccessSelector: string =
+  "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.mt-5 > ul > li:nth-child(2) > div > p";
 
-const run = async () => {
+const run = async (absenBtn: string, successSelector: string) => {
   let browser: puppeteer.Browser | null = null;
   let page: puppeteer.Page | null = null;
   try {
@@ -52,10 +56,13 @@ const run = async () => {
     console.log("absen page");
     await page.waitForSelector(absenBtn);
     await page.click(absenBtn);
-    const clockInRes : puppeteer.ElementHandle<Element> | null = await page.waitForSelector(clockInSuccessSelector);
-    if(!clockInRes) throw new Error('clock in gagal');
-    console.log(document.querySelector(clockInSuccessSelector)?.textContent)
-    
+    const clockInRes: puppeteer.ElementHandle<Element> | null =
+      await page.waitForSelector(clockInSuccessSelector);
+    if (!clockInRes) throw new Error("clock in gagal");
+    page.evaluate(() =>
+      console.log(document.querySelector(clockInSuccessSelector)?.textContent)
+    );
+
     //testing
     const test: Buffer = await page.screenshot({ type: "png" });
     fs.writeFileSync("test.png", test);
@@ -68,4 +75,17 @@ const run = async () => {
   }
 };
 
-run();
+const arg: string = process.argv[2];
+try {
+  if (!arg) throw new Error("arg is missing");
+  let absenBtn: string = clockInBtn;
+  let successSelector: string = clockInSuccessSelector;
+  if (arg.toLocaleLowerCase() == "clockout") {
+    absenBtn = clockOutBtn;
+    successSelector = clockOutSuccessSelector;
+  }
+
+  run(absenBtn, successSelector);
+} catch (err) {
+  console.error(err);
+}
