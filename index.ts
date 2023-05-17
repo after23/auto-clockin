@@ -57,22 +57,23 @@ const run = async (absenBtn: string, successSelector: string) => {
     await page.goto(liveAttendanceURL);
     console.log("absen page");
     await page.waitForSelector(absenBtn);
-    const checker = await page.waitForSelector(successSelector, {
-      hidden: true,
-      timeout: 3_000,
-    });
-    if (!checker) throw new Error("udah clockin/clockout");
-    await page.click(absenBtn);
-    const clockInRes: puppeteer.ElementHandle<Element> | null =
-      await page.waitForSelector(successSelector);
-    if (!clockInRes) throw new Error("clock in gagal");
-    page.evaluate(() =>
-      console.log(document.querySelector(successSelector)?.textContent)
+    const checker: string | null = await page.$eval(
+      successSelector,
+      (el) => el.textContent
     );
+    if (checker) throw new Error("udah clockin/clockout");
+    await page.click(absenBtn);
+    await page.waitForSelector(successSelector);
+    const result: string | null = await page.$eval(
+      successSelector,
+      (el) => el.textContent
+    );
+    if (!result) throw new Error("clock in/out gagal");
+    console.log(`${result} success`);
 
     //testing
-    const test: Buffer = await page.screenshot({ type: "png" });
-    fs.writeFileSync("test.png", test);
+    // const test: Buffer = await page.screenshot({ type: "png" });
+    // fs.writeFileSync("test.png", test);
     await page.goto(singOutURL);
     console.log("signed out!");
   } catch (err) {
@@ -93,7 +94,6 @@ try {
     absenBtn = clockOutBtn;
     successSelector = clockOutSuccessSelector;
   }
-
   run(absenBtn, successSelector);
 } catch (err) {
   console.error(err);
