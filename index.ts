@@ -14,9 +14,11 @@ const clockInBtn: string =
 const clockOutBtn: string =
   "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.tl-card.hide-box-shadow-on-mobile.hide-border-on-mobile.text-center.p-0 > div.d-block.p-4.px-0-on-mobile > div > div:nth-child(2) > button";
 const clockInSuccessSelector: string =
-  "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.mt-5 > ul > li.py-2.border-smoke.border-bottom > div > p";
+  "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.mt-5 > ul > li > div > p";
 const clockOutSuccessSelector: string =
   "#tl-live-attendance-index > div > div.tl-content-max__600.my-3.my-md-5.mx-auto.px-3.px-md-0 > div.mt-5 > ul > li:nth-child(2) > div > p";
+
+const clockOutTime: number = 3600 * 17 + 30 * 60;
 
 const run = async (absenBtn: string, successSelector: string) => {
   let browser: puppeteer.Browser | null = null;
@@ -55,12 +57,17 @@ const run = async (absenBtn: string, successSelector: string) => {
     await page.goto(liveAttendanceURL);
     console.log("absen page");
     await page.waitForSelector(absenBtn);
+    const checker = await page.waitForSelector(successSelector, {
+      hidden: true,
+      timeout: 3_000,
+    });
+    if (!checker) throw new Error("udah clockin/clockout");
     await page.click(absenBtn);
     const clockInRes: puppeteer.ElementHandle<Element> | null =
-      await page.waitForSelector(clockInSuccessSelector);
+      await page.waitForSelector(successSelector);
     if (!clockInRes) throw new Error("clock in gagal");
     page.evaluate(() =>
-      console.log(document.querySelector(clockInSuccessSelector)?.textContent)
+      console.log(document.querySelector(successSelector)?.textContent)
     );
 
     //testing
@@ -75,12 +82,14 @@ const run = async (absenBtn: string, successSelector: string) => {
   }
 };
 
-const arg: string = process.argv[2];
+// console.log(arg);
 try {
-  if (!arg) throw new Error("arg is missing");
   let absenBtn: string = clockInBtn;
   let successSelector: string = clockInSuccessSelector;
-  if (arg.toLocaleLowerCase() == "clockout") {
+  const today: Date = new Date();
+  const now: number = today.getHours() * 3600 + 60 * today.getMinutes();
+  if (now < 5 * 3600) throw new Error("kepagian");
+  if (now > clockOutTime) {
     absenBtn = clockOutBtn;
     successSelector = clockOutSuccessSelector;
   }
