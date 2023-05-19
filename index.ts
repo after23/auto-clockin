@@ -57,9 +57,8 @@ const run = async (absenBtn: string, successSelector: string) => {
     await page.goto(liveAttendanceURL);
     console.log("absen page");
     await page.waitForSelector(absenBtn);
-    const checker: string | null = await page.$eval(
-      successSelector,
-      (el) => el.textContent
+    const checker: puppeteer.ElementHandle<Element> | null = await page.$(
+      successSelector
     );
     if (checker) throw new Error("udah clockin/clockout");
     await page.click(absenBtn);
